@@ -2415,6 +2415,7 @@ nl_msg_put_flower_acts(struct ofpbuf *request, struct tc_flower *flower)
                                               action->encap.ttl,
                                               action->encap.data,
                                               action->encap.no_csum);
+
                 nl_msg_put_act_flags(request);
                 nl_msg_end_nested(request, act_offset);
             }
@@ -2551,7 +2552,7 @@ nl_msg_put_masked_value(struct ofpbuf *request, uint16_t type,
                         const void *mask_data, size_t len)
 {
     if (mask_type != TCA_FLOWER_UNSPEC) {
-        if (is_all_zeros(mask_data, len)) {
+        if (is_all_zeros(mask_data, len) && is_all_zeros(data, len)) {
             return;
         }
         nl_msg_put_unspec(request, mask_type, mask_data, len);
@@ -2613,18 +2614,18 @@ nl_msg_put_flower_tunnel(struct ofpbuf *request, struct tc_flower *flower)
         nl_msg_put_in6_addr(request, TCA_FLOWER_KEY_ENC_IPV6_SRC, ipv6_src);
         nl_msg_put_in6_addr(request, TCA_FLOWER_KEY_ENC_IPV6_DST, ipv6_dst);
     }
-    if (tos_mask) {
+    if (tos || tos_mask) {
         nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TOS, tos);
         nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TOS_MASK, tos_mask);
     }
-    if (ttl_mask) {
+    if (ttl || ttl_mask) {
         nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TTL, ttl);
         nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TTL_MASK, ttl_mask);
     }
     if (tp_dst) {
         nl_msg_put_be16(request, TCA_FLOWER_KEY_ENC_UDP_DST_PORT, tp_dst);
     }
-    if (id_mask) {
+    if (id || id_mask) {
         nl_msg_put_be32(request, TCA_FLOWER_KEY_ENC_KEY_ID, id);
     }
     nl_msg_put_flower_tunnel_opts(request, TCA_FLOWER_KEY_ENC_OPTS,
@@ -2673,7 +2674,7 @@ nl_msg_put_flower_options(struct ofpbuf *request, struct tc_flower *flower)
         FLOWER_PUT_MASKED_VALUE(ip_ttl, TCA_FLOWER_KEY_IP_TTL);
         FLOWER_PUT_MASKED_VALUE(ip_tos, TCA_FLOWER_KEY_IP_TOS);
 
-        if (flower->mask.ip_proto && flower->key.ip_proto) {
+        if (flower->mask.ip_proto || flower->key.ip_proto) {
             nl_msg_put_u8(request, TCA_FLOWER_KEY_IP_PROTO,
                           flower->key.ip_proto);
         }
@@ -2714,30 +2715,30 @@ nl_msg_put_flower_options(struct ofpbuf *request, struct tc_flower *flower)
     nl_msg_put_be16(request, TCA_FLOWER_KEY_ETH_TYPE, flower->key.eth_type);
 
     if (is_mpls) {
-        if (mpls_lse_to_ttl(flower->mask.mpls_lse)) {
+        if (mpls_lse_to_ttl(flower->key.mpls_lse) || mpls_lse_to_ttl(flower->mask.mpls_lse)) {
             nl_msg_put_u8(request, TCA_FLOWER_KEY_MPLS_TTL,
                           mpls_lse_to_ttl(flower->key.mpls_lse));
         }
-        if (mpls_lse_to_tc(flower->mask.mpls_lse)) {
+        if (mpls_lse_to_tc(flower->key.mpls_lse) || mpls_lse_to_tc(flower->mask.mpls_lse)) {
             nl_msg_put_u8(request, TCA_FLOWER_KEY_MPLS_TC,
                           mpls_lse_to_tc(flower->key.mpls_lse));
         }
-        if (mpls_lse_to_bos(flower->mask.mpls_lse)) {
+        if (mpls_lse_to_bos(flower->key.mpls_lse) || mpls_lse_to_bos(flower->mask.mpls_lse)) {
             nl_msg_put_u8(request, TCA_FLOWER_KEY_MPLS_BOS,
                           mpls_lse_to_bos(flower->key.mpls_lse));
         }
-        if (mpls_lse_to_label(flower->mask.mpls_lse)) {
+        if (mpls_lse_to_label(flower->key.mpls_lse) || mpls_lse_to_label(flower->mask.mpls_lse)) {
             nl_msg_put_u32(request, TCA_FLOWER_KEY_MPLS_LABEL,
                            mpls_lse_to_label(flower->key.mpls_lse));
         }
     }
 
     if (is_vlan) {
-        if (flower->mask.vlan_id[0]) {
+        if (flower->key.vlan_id[0] || flower->mask.vlan_id[0]) {
             nl_msg_put_u16(request, TCA_FLOWER_KEY_VLAN_ID,
                            flower->key.vlan_id[0]);
         }
-        if (flower->mask.vlan_prio[0]) {
+        if (flower->key.vlan_prio[0] || flower->mask.vlan_prio[0]) {
             nl_msg_put_u8(request, TCA_FLOWER_KEY_VLAN_PRIO,
                           flower->key.vlan_prio[0]);
         }
@@ -2747,11 +2748,11 @@ nl_msg_put_flower_options(struct ofpbuf *request, struct tc_flower *flower)
         }
 
         if (is_qinq) {
-            if (flower->mask.vlan_id[1]) {
+            if (flower->key.vlan_id[1] || flower->mask.vlan_id[1]) {
                 nl_msg_put_u16(request, TCA_FLOWER_KEY_CVLAN_ID,
                                flower->key.vlan_id[1]);
             }
-            if (flower->mask.vlan_prio[1]) {
+            if (flower->key.vlan_prio[1] || flower->mask.vlan_prio[1]) {
                 nl_msg_put_u8(request, TCA_FLOWER_KEY_CVLAN_PRIO,
                               flower->key.vlan_prio[1]);
             }
