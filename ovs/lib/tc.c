@@ -2415,7 +2415,6 @@ nl_msg_put_flower_acts(struct ofpbuf *request, struct tc_flower *flower)
                                               action->encap.ttl,
                                               action->encap.data,
                                               action->encap.no_csum);
-
                 nl_msg_put_act_flags(request);
                 nl_msg_end_nested(request, act_offset);
             }
