@@ -2610,20 +2610,19 @@ nl_msg_put_flower_tunnel(struct ofpbuf *request, struct tc_flower *flower)
         nl_msg_put_in6_addr(request, TCA_FLOWER_KEY_ENC_IPV6_SRC, ipv6_src);
         nl_msg_put_in6_addr(request, TCA_FLOWER_KEY_ENC_IPV6_DST, ipv6_dst);
     }
-    if (tos_mask) {
-        nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TOS, tos);
-        nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TOS_MASK, tos_mask);
-    }
-    if (ttl_mask) {
-        nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TTL, ttl);
-        nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TTL_MASK, ttl_mask);
-    }
+
+    nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TOS, tos);
+    nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TOS_MASK, tos_mask);
+
+    nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TTL, ttl);
+    nl_msg_put_u8(request, TCA_FLOWER_KEY_ENC_IP_TTL_MASK, ttl_mask);
+
     if (tp_dst) {
         nl_msg_put_be16(request, TCA_FLOWER_KEY_ENC_UDP_DST_PORT, tp_dst);
     }
-    if (id_mask) {
-        nl_msg_put_be32(request, TCA_FLOWER_KEY_ENC_KEY_ID, id);
-    }
+
+    nl_msg_put_be32(request, TCA_FLOWER_KEY_ENC_KEY_ID, id);
+
     nl_msg_put_flower_tunnel_opts(request, TCA_FLOWER_KEY_ENC_OPTS,
                                   flower->key.tunnel.metadata);
     nl_msg_put_flower_tunnel_opts(request, TCA_FLOWER_KEY_ENC_OPTS_MASK,
